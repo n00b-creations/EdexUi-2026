@@ -21,7 +21,8 @@ class LocationGlobe {
 
         this.lastgeo = {};
         this.conns = [];
-
+        this.globe = null;
+        this.globeReady = false;
 
         setTimeout(() => {
             let container = document.getElementById("mod_globe_innercontainer");
@@ -45,13 +46,21 @@ class LocationGlobe {
                     maxMarkers: 100
                 });
 
+                if (!this.globe || !this.globe.domElement) {
+                    throw new Error('Globe renderer unavailable');
+                }
+
                 placeholder.remove();
                 container.append(this.globe.domElement);
             } catch (e) {
                 console.warn('Globe initialization failed:', e);
                 placeholder.innerText = 'Globe unavailable';
+                this.globe = null;
+                this.globeReady = false;
                 return;
             }
+
+            this.globeReady = false;
 
             this._animate = () => {
                 if (document.hidden) {
@@ -59,7 +68,12 @@ class LocationGlobe {
                     return;
                 }
                 if (window.mods.globe.globe) {
-                    window.mods.globe.globe.tick();
+                    try {
+                        window.mods.globe.globe.tick();
+                    } catch (e) {
+                        console.warn('Globe tick failed:', e);
+                        return;
+                    }
                 }
                 if (window.mods.globe._animate) {
                     setTimeout(() => {
@@ -73,12 +87,15 @@ class LocationGlobe {
             };
             try {
                 this.globe.init(window.theme.colors.light_black, () => {
+                    this.globeReady = true;
                     this._animate();
                     window.audioManager.scan.play();
                 });
             } catch (e) {
                 console.warn('Globe init failed:', e);
                 placeholder.innerText = 'Globe unavailable';
+                this.globe = null;
+                this.globeReady = false;
                 return;
             }
 
@@ -93,6 +110,7 @@ class LocationGlobe {
 
             this.conns = [];
             this.addConn = ip => {
+                if (!this.globe || !this.globeReady || !window.mods.globe.globe) return;
                 let data = null;
                 try {
                     data = window.mods.netstat.geoLookup.get(ip);
@@ -110,8 +128,12 @@ class LocationGlobe {
                 }
             };
             this.removeConn = ip => {
+                if (!this.globe || !this.globeReady || !window.mods.globe.globe) return;
                 let index = this.conns.findIndex(x => x.ip === ip);
-                this.conns[index].pin.remove();
+                if (index === -1) return;
+                if (this.conns[index].pin && typeof this.conns[index].pin.remove === 'function') {
+                    this.conns[index].pin.remove();
+                }
                 this.conns.splice(index, 1);
             };
 
@@ -126,7 +148,9 @@ class LocationGlobe {
                 }
             }
 
-            this.globe.addConstellation(constellation);
+            if (this.globe) {
+                this.globe.addConstellation(constellation);
+            }
         }, 2000);
 
         // Init updaters when intro animation is done
@@ -144,12 +168,14 @@ class LocationGlobe {
     }
 
     addRandomConnectedMarkers() {
+        if (!this.globe || !this.globeReady) return;
         const randomLat = this.getRandomInRange(40, 90, 3);
         const randomLong = this.getRandomInRange(-180, 0, 3);
         this.globe.addMarker(randomLat, randomLong, '');
         this.globe.addMarker(randomLat - 20, randomLong + 150, '', true);
     }
     addTemporaryConnectedMarker(ip) {
+        if (!this.globe || !this.globeReady) return;
         let data = window.mods.netstat.geoLookup.get(ip);
         let geo = (data !== null ? data.location : {});
         if (geo.latitude && geo.longitude) {
@@ -167,10 +193,12 @@ class LocationGlobe {
         }
     }
     removeMarkers() {
+        if (!this.globe || !Array.isArray(this.globe.markers)) return;
         this.globe.markers.forEach(marker => { marker.remove(); });
         this.globe.markers = [];
     }
     removePins() {
+        if (!this.globe || !Array.isArray(this.globe.pins)) return;
         this.globe.pins.forEach(pin => {
             pin.remove();
         });
@@ -204,9 +232,13 @@ class LocationGlobe {
             throw new Error("GeoIP data unavailable");
         }
 
+        if (!this.globe) {
+            return;
+        }
+
         let newgeo = window.mods.netstat.ipinfo.geo;
-        newgeo.latitude = Math.round(newgeo.latitude*10000)/10000;
-        newgeo.longitude = Math.round(newgeo.longitude*10000)/10000;
+        newgeo.latitude = Math.round(newgeo.latitude * 10000)/10000;
+        newgeo.longitude = Math.round(newgeo.longitude * 10000)/10000;
 
         if (newgeo.latitude !== this.lastgeo.latitude || newgeo.longitude !== this.lastgeo.longitude) {
 
