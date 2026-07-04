@@ -82,7 +82,6 @@ Install project packages:
 
 ```bash
 npm install
-cd src && npm install && cd ..
 ```
 
 Run the app:
@@ -167,3 +166,4 @@ Special thanks to Hyder6112 and Ahmed Adnan for helping with the project.
 ## License
 
 Because this project is derived from the original GPL-licensed eDEX-UI codebase, it remains licensed under `GPL-3.0-or-later`.
+cd src && npm install && cd ..
