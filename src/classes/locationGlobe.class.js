@@ -27,10 +27,11 @@ class LocationGlobe {
             let container = document.getElementById("mod_globe_innercontainer");
             let placeholder = document.getElementById("mod_globe_canvas_placeholder");
 
-            this.globe = new this.ENCOM.Globe(placeholder.offsetWidth, placeholder.offsetHeight, {
-                font: window.theme.cssvars.font_main,
-                data: [],
-                tiles: this._geodata.tiles,
+            try {
+                this.globe = new this.ENCOM.Globe(placeholder.offsetWidth, placeholder.offsetHeight, {
+                    font: window.theme.cssvars.font_main,
+                    data: [],
+                    tiles: this._geodata.tiles,
                 baseColor: window.theme.globe.base || `rgb(${window.theme.r},${window.theme.g},${window.theme.b})`,
                 markerColor: window.theme.globe.marker || `rgb(${window.theme.r},${window.theme.g},${window.theme.b})`,
                 pinColor: window.theme.globe.pin || `rgb(${window.theme.r},${window.theme.g},${window.theme.b})`,
@@ -65,10 +66,16 @@ class LocationGlobe {
                     }, 1000 / 24);
                 }
             };
-            this.globe.init(window.theme.colors.light_black, () => {
-                this._animate();
-                window.audioManager.scan.play();
-            });
+            try {
+                this.globe.init(window.theme.colors.light_black, () => {
+                    this._animate();
+                    window.audioManager.scan.play();
+                });
+            } catch (e) {
+                console.warn('Globe init failed:', e);
+                placeholder.innerText = 'Globe unavailable';
+                return;
+            }
 
             this.resizeHandler = () => {
                 let canvas = document.querySelector("div#mod_globe canvas");
