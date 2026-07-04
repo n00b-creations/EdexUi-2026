@@ -24,9 +24,24 @@ class LocationGlobe {
         this.globe = null;
         this.globeReady = false;
 
+        const hasWebGLSupport = () => {
+            try {
+                const canvas = document.createElement('canvas');
+                return !!(window.WebGLRenderingContext && (canvas.getContext('webgl') || canvas.getContext('experimental-webgl')));
+            } catch (e) {
+                return false;
+            }
+        };
+
         setTimeout(() => {
             let container = document.getElementById("mod_globe_innercontainer");
             let placeholder = document.getElementById("mod_globe_canvas_placeholder");
+
+            if (!hasWebGLSupport()) {
+                console.warn('WebGL unavailable or blocked; skipping globe module.');
+                placeholder.innerText = 'Globe unavailable';
+                return;
+            }
 
             try {
                 this.globe = new this.ENCOM.Globe(placeholder.offsetWidth, placeholder.offsetHeight, {
