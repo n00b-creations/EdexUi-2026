@@ -23231,10 +23231,6 @@ THREE.WebGLRenderer = function ( parameters ) {
 
 	initGL();
 
-	if ( ! _gl ) {
-		throw new Error( 'WebGL context unavailable' );
-	}
-
 	setDefaultGLState();
 
 	this.context = _gl;
