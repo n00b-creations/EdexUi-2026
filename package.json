@@ -14,6 +14,7 @@
   "main": "src/_boot.js",
   "scripts": {
     "start": "env -u ELECTRON_RUN_AS_NODE ELECTRON_OZONE_PLATFORM_HINT=x11 electron --ozone-platform=x11 src",
+    "start:headless": "env -u ELECTRON_RUN_AS_NODE ELECTRON_OZONE_PLATFORM_HINT=x11 electron --ozone-platform=x11 src --disable-gpu --use-gl=swiftshader --ignore-gpu-blocklist",
     "start:fast": "env -u ELECTRON_RUN_AS_NODE ELECTRON_OZONE_PLATFORM_HINT=x11 electron --ozone-platform=x11 src --nointro",
     "install-linux": "npm install && cd src && npm install --legacy-peer-deps && npx electron-rebuild -f -w node-pty && cd ..",
     "preinstall-windows": "npm install --global --production windows-build-tools && npm install --global node-gyp && setx PYTHON \"%USERPROFILE%\\.windows-build-tools\\python27\\python.exe\"",
