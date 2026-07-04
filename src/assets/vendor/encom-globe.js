@@ -29513,6 +29513,11 @@ THREE.WebGLRenderer = function ( parameters ) {
 
 		}
 
+		if ( ! _gl ) {
+			console.warn( 'WebGL context unavailable; skipping extension initialization.' );
+			return;
+		}
+
 		_glExtensionTextureFloat = _gl.getExtension( 'OES_texture_float' );
 		_glExtensionTextureFloatLinear = _gl.getExtension( 'OES_texture_float_linear' );
 		_glExtensionStandardDerivatives = _gl.getExtension( 'OES_standard_derivatives' );

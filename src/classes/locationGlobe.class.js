@@ -32,21 +32,26 @@ class LocationGlobe {
                     font: window.theme.cssvars.font_main,
                     data: [],
                     tiles: this._geodata.tiles,
-                baseColor: window.theme.globe.base || `rgb(${window.theme.r},${window.theme.g},${window.theme.b})`,
-                markerColor: window.theme.globe.marker || `rgb(${window.theme.r},${window.theme.g},${window.theme.b})`,
-                pinColor: window.theme.globe.pin || `rgb(${window.theme.r},${window.theme.g},${window.theme.b})`,
-                satelliteColor: window.theme.globe.satellite || `rgb(${window.theme.r},${window.theme.g},${window.theme.b})`,
-                scale: 1.1,
-                viewAngle: 0.630,
-                dayLength: 1000 * 45,
-                introLinesDuration: 2000,
-                introLinesColor: window.theme.globe.marker || `rgb(${window.theme.r},${window.theme.g},${window.theme.b})`,
-                maxPins: 300,
-                maxMarkers: 100
-            });
+                    baseColor: window.theme.globe.base || `rgb(${window.theme.r},${window.theme.g},${window.theme.b})`,
+                    markerColor: window.theme.globe.marker || `rgb(${window.theme.r},${window.theme.g},${window.theme.b})`,
+                    pinColor: window.theme.globe.pin || `rgb(${window.theme.r},${window.theme.g},${window.theme.b})`,
+                    satelliteColor: window.theme.globe.satellite || `rgb(${window.theme.r},${window.theme.g},${window.theme.b})`,
+                    scale: 1.1,
+                    viewAngle: 0.630,
+                    dayLength: 1000 * 45,
+                    introLinesDuration: 2000,
+                    introLinesColor: window.theme.globe.marker || `rgb(${window.theme.r},${window.theme.g},${window.theme.b})`,
+                    maxPins: 300,
+                    maxMarkers: 100
+                });
 
-            placeholder.remove();
-            container.append(this.globe.domElement);
+                placeholder.remove();
+                container.append(this.globe.domElement);
+            } catch (e) {
+                console.warn('Globe initialization failed:', e);
+                placeholder.innerText = 'Globe unavailable';
+                return;
+            }
 
             this._animate = () => {
                 if (document.hidden) {
