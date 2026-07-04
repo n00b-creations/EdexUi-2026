@@ -1,15 +1,23 @@
 {
-    "configurations": [
-        {
-            "name": "Containers: Node.js Launch",
-            "type": "docker",
-            "request": "launch",
-            "preLaunchTask": "docker-run: debug",
-            "platform": "node",
-            "node": {
-                "package": "${workspaceFolder}/src/node_modules/pdfjs-dist/package.json",
-                "localRoot": "${workspaceFolder}/src/node_modules/pdfjs-dist"
-            }
-        }
-    ]
+  "configurations": [
+    {
+      "type": "node",
+      "request": "launch",
+      "name": "Run which",
+      "runtimeExecutable": "which",
+      "cwd": "${workspaceFolder}/prebuild-src/node_modules/cross-spawn",
+      "args": []
+    },
+    {
+      "name": "Containers: Node.js Launch",
+      "type": "docker",
+      "request": "launch",
+      "preLaunchTask": "docker-run: debug",
+      "platform": "node",
+      "node": {
+        "package": "${workspaceFolder}/src/node_modules/pdfjs-dist/package.json",
+        "localRoot": "${workspaceFolder}/src/node_modules/pdfjs-dist"
+      }
+    }
+  ]
 }
