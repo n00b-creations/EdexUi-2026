@@ -90,6 +90,12 @@ Run the app:
 npm start
 ```
 
+Run the app headlessly (Linux headless container / CI):
+
+```bash
+dbus-run-session -- sh -c 'xvfb-run -a npm run start:headless'
+```
+
 Skip the intro animation:
 
 ```bash
