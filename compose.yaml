@@ -1,0 +1,10 @@
+services:
+  pdfjsdist:
+    image: pdfjsdist
+    build:
+      context: src/node_modules/pdfjs-dist
+      dockerfile: ./Dockerfile
+    environment:
+      NODE_ENV: production
+    ports:
+      - 3000:3000
