@@ -63,17 +63,16 @@ class LocationGlobe {
             this.globeReady = false;
 
             this._animate = () => {
+                if (!this.globe || !this.globeReady) return;
                 if (document.hidden) {
                     requestAnimationFrame(window.mods.globe._animate);
                     return;
                 }
-                if (window.mods.globe.globe) {
-                    try {
-                        window.mods.globe.globe.tick();
-                    } catch (e) {
-                        console.warn('Globe tick failed:', e);
-                        return;
-                    }
+                try {
+                    this.globe.tick();
+                } catch (e) {
+                    console.warn('Globe tick failed:', e);
+                    return;
                 }
                 if (window.mods.globe._animate) {
                     setTimeout(() => {
@@ -90,6 +89,9 @@ class LocationGlobe {
                     this.globeReady = true;
                     this._animate();
                     window.audioManager.scan.play();
+                    if (this.globe) {
+                        this.globe.addConstellation(constellation);
+                    }
                 });
             } catch (e) {
                 console.warn('Globe init failed:', e);
@@ -101,10 +103,10 @@ class LocationGlobe {
 
             this.resizeHandler = () => {
                 let canvas = document.querySelector("div#mod_globe canvas");
-                if (!canvas || !window.mods.globe.globe) return;
-                window.mods.globe.globe.camera.aspect = canvas.offsetWidth / canvas.offsetHeight;
-                window.mods.globe.globe.camera.updateProjectionMatrix();
-                window.mods.globe.globe.renderer.setSize(canvas.offsetWidth, canvas.offsetHeight);
+                if (!canvas || !this.globe || !this.globeReady) return;
+                this.globe.camera.aspect = canvas.offsetWidth / canvas.offsetHeight;
+                this.globe.camera.updateProjectionMatrix();
+                this.globe.renderer.setSize(canvas.offsetWidth, canvas.offsetHeight);
             };
             window.addEventListener("resize", this.resizeHandler);
 
@@ -148,9 +150,7 @@ class LocationGlobe {
                 }
             }
 
-            if (this.globe) {
-                this.globe.addConstellation(constellation);
-            }
+            // Constellation will be added once the globe is fully initialized.
         }, 2000);
 
         // Init updaters when intro animation is done
