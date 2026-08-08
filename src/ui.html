@@ -48,6 +48,8 @@
         <link rel="stylesheet" href="assets/css/mod_processlist.css" />
         <!-- Load extra CSS -->
         <link rel="stylesheet" href="assets/css/extra_ratios.css" />
+        <!-- New: 3D widget + voice assistant css -->
+        <link rel="stylesheet" href="assets/css/mod_three.css" />
 
         <!-- Load main modules classes -->
         <script src="classes/modal.class.js"></script>
@@ -70,11 +72,77 @@
         <script src="classes/fuzzyFinder.class.js"></script>
         <!-- Load extra classes -->
         <script src="classes/audiofx.class.js"></script>
+
+        <!-- New: three.js and widget + voice assistant -->
+        <!-- Note: run `cd src && npm install three` to populate node_modules/three before launching -->
+        <script src="node_modules/three/build/three.min.js"></script>
+        <script src="classes/threeScene.class.js"></script>
+        <script src="classes/voiceAssistant.class.js"></script>
     </head>
     <body class="solidBackground" style="margin:0;width:100%;height:100%;overflow:hidden;background:#000000 !important;background-color:#000000 !important;">
         <section id="boot_screen" style="position:fixed;inset:0;width:100%;height:100%;margin:0;padding:2vh 2.4vh;overflow:hidden;display:flex;flex-direction:column;background:#000000 !important;background-color:#000000 !important;">
         </section>
 
+        <!-- 3D widget container and voice toggle control -->
+        <div id="three-widget" class="mod three-widget" aria-hidden="true"></div>
+        <button id="voice-toggle" title="Toggle Voice Assistant">Voice</button>
+
         <script src="_renderer.js"></script>
+
+        <script>
+        // Initialize three.js widget and voice assistant once the UI and terminal are ready
+        (function () {
+          function readyCheck() {
+            if (window.term && typeof window.term[0] === 'object') {
+              try {
+                // create widget
+                if (!window.threeWidget) {
+                  window.threeWidget = createThreeWidget('three-widget');
+                }
+
+                // create voice assistant
+                if (!window.voiceAssistant) {
+                  const enabled = (window.settings && window.settings.experimentalFeatures) || false;
+                  window.voiceAssistant = createVoiceAssistant({ enabled: false, continuous: true, autoSpeak: false });
+
+                  // default handler: write recognized speech to terminal and press enter
+                  window.voiceAssistant.onCommand = function (cmd) {
+                    try {
+                      const client = window.term[window.currentTerm];
+                      if (!client) return;
+                      const fn = (typeof client.writelr === 'function') ? 'writelr' : 'write';
+                      client[fn](cmd);
+                    } catch (e) { console.warn(e); }
+                  };
+
+                  // toggle button
+                  const btn = document.getElementById('voice-toggle');
+                  if (btn) {
+                    btn.addEventListener('click', () => {
+                      if (window.voiceAssistant.enabled) {
+                        window.voiceAssistant.stop();
+                        btn.classList.remove('active');
+                        btn.textContent = 'Voice';
+                      } else {
+                        const ok = window.voiceAssistant.start();
+                        if (ok) {
+                          btn.classList.add('active');
+                          btn.textContent = 'Listening';
+                        }
+                      }
+                    });
+                  }
+                }
+              } catch (e) {
+                console.warn('Widget/Voice init failed', e);
+              }
+            } else {
+              setTimeout(readyCheck, 250);
+            }
+          }
+          // run after a short delay to allow settings file to be loaded by _renderer.js
+          setTimeout(readyCheck, 400);
+        })();
+        </script>
     </body>
 </html>
