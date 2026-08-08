@@ -1,85 +1,128 @@
 (function (global) {
-  // Minimal three.js widget for EdexUi-2026
-  // Exposes createThreeWidget(containerId) that returns an instance with destroy() and resize()
-  function ThreeWidget(container) {
+  // ProcessBarsWidget: uses three.js to render top processes as 3D bars.
+  // It polls window.si.processes() when available; otherwise runs a demo animation.
+  function ProcessBarsWidget(container) {
     if (!container) throw new Error('container required');
     this.container = container;
     this.width = container.clientWidth || 400;
-    this.height = container.clientHeight || 300;
+    this.height = container.clientHeight || 200;
 
-    // Renderer
+    this.scene = new THREE.Scene();
+    this.camera = new THREE.PerspectiveCamera(50, this.width / this.height, 0.1, 1000);
+    this.camera.position.set(0, 6, 12);
+    this.camera.lookAt(0, 0, 0);
+
     this.renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
     this.renderer.setPixelRatio(window.devicePixelRatio || 1);
     this.renderer.setSize(this.width, this.height);
-    this.renderer.domElement.style.display = 'block';
     this.container.appendChild(this.renderer.domElement);
 
-    // Scene + Camera
-    this.scene = new THREE.Scene();
-    this.camera = new THREE.PerspectiveCamera(45, this.width / this.height, 0.1, 1000);
-    this.camera.position.set(0, 0, 4);
-
-    // Simple scene content
-    const geo = new THREE.BoxGeometry(1, 1, 1);
-    const mat = new THREE.MeshStandardMaterial({ color: 0x3399ff, metalness: 0.2, roughness: 0.6 });
-    this.mesh = new THREE.Mesh(geo, mat);
-    this.scene.add(this.mesh);
-
-    // Light
-    const amb = new THREE.AmbientLight(0xffffff, 0.6);
-    this.scene.add(amb);
-    const dir = new THREE.DirectionalLight(0xffffff, 0.6);
-    dir.position.set(5, 5, 5);
+    const ambient = new THREE.AmbientLight(0xffffff, 0.6);
+    this.scene.add(ambient);
+    const dir = new THREE.DirectionalLight(0xffffff, 0.8);
+    dir.position.set(5, 10, 7);
     this.scene.add(dir);
 
-    // Interaction
+    // ground plane
+    const groundGeo = new THREE.PlaneGeometry(20, 10);
+    const groundMat = new THREE.MeshStandardMaterial({ color: 0x000000, opacity: 0, transparent: true });
+    const ground = new THREE.Mesh(groundGeo, groundMat);
+    ground.rotation.x = -Math.PI / 2;
+    ground.position.y = -0.01;
+    this.scene.add(ground);
+
+    this.bars = [];
+    this.maxBars = 8;
+    this._createBars();
+
     this.pointer = new THREE.Vector2();
-    this.onPointerMove = this.onPointerMove.bind(this);
-    container.addEventListener('pointermove', this.onPointerMove);
+    this.container.addEventListener('pointermove', this._onPointerMove.bind(this));
 
-    // Resize handling
-    this.onResize = this.onResize.bind(this);
-    window.addEventListener('resize', this.onResize);
-
-    // Animation loop
     this._running = true;
     this._tick = this._tick.bind(this);
+    this._lastUpdate = 0;
+    this._pollInterval = 2000;
     requestAnimationFrame(this._tick);
   }
 
-  ThreeWidget.prototype.onPointerMove = function (ev) {
+  ProcessBarsWidget.prototype._createBars = function () {
+    const spacing = 1.2;
+    for (let i = 0; i < this.maxBars; i++) {
+      const geo = new THREE.BoxGeometry(0.8, 0.1, 0.8);
+      const mat = new THREE.MeshStandardMaterial({ color: new THREE.Color().setHSL(i / this.maxBars, 0.6, 0.5) });
+      const mesh = new THREE.Mesh(geo, mat);
+      mesh.position.set((i - (this.maxBars - 1) / 2) * spacing, 0.05, 0);
+      this.scene.add(mesh);
+      this.bars.push({ mesh, height: 0.1, target: 0.1, label: '' });
+    }
+  };
+
+  ProcessBarsWidget.prototype._onPointerMove = function (ev) {
     const rect = this.container.getBoundingClientRect();
     this.pointer.x = ((ev.clientX - rect.left) / rect.width) * 2 - 1;
     this.pointer.y = -((ev.clientY - rect.top) / rect.height) * 2 + 1;
   };
 
-  ThreeWidget.prototype._tick = function (t) {
+  ProcessBarsWidget.prototype._tick = async function (t) {
     if (!this._running) return;
-    // simple animation tied to pointer
-    this.mesh.rotation.x += 0.01 + (this.pointer.y * 0.02);
-    this.mesh.rotation.y += 0.01 + (this.pointer.x * 0.02);
+
+    // Poll processes periodically
+    if (!this._siUnavailable && (t - this._lastUpdate) > this._pollInterval) {
+      this._lastUpdate = t;
+      try {
+        if (window.si && typeof window.si.processes === 'function') {
+          const res = await window.si.processes();
+          // systeminformation returns object { list: [...] } in some versions
+          const list = Array.isArray(res) ? res : (res && res.list) ? res.list : [];
+          const top = list
+            .filter(p => typeof p.pcpu === 'number')
+            .sort((a, b) => b.pcpu - a.pcpu)
+            .slice(0, this.maxBars);
+
+          for (let i = 0; i < this.maxBars; i++) {
+            const proc = top[i];
+            const pct = proc ? Math.max(0.001, Math.min(1, proc.pcpu / 100)) : 0.001;
+            const target = 0.1 + pct * 6.0; // height
+            this.bars[i].target = target;
+            this.bars[i].label = proc ? `${proc.name} (${Math.round(proc.pcpu)}%)` : '';
+            this.bars[i].mesh.material.color.setHSL((proc ? i / this.maxBars : 0.1), 0.6, 0.5);
+          }
+        } else {
+          // si not ready yet
+          this._siUnavailable = true; // prevent repeated checks for a moment
+          setTimeout(() => { this._siUnavailable = false; }, 5000);
+        }
+      } catch (e) {
+        console.warn('ProcessBarsWidget: failed to poll si.processes()', e);
+        this._siUnavailable = true;
+      }
+    }
+
+    // smooth animation towards target heights
+    this.bars.forEach((b, idx) => {
+      b.height += (b.target - b.height) * 0.08;
+      b.mesh.scale.y = Math.max(0.01, b.height);
+      b.mesh.position.y = b.height / 2;
+      // subtle rotation interaction
+      b.mesh.rotation.y += (this.pointer.x * 0.005) + 0.002 * (idx % 2 === 0 ? 1 : -1);
+    });
+
     this.renderer.render(this.scene, this.camera);
     this._raf = requestAnimationFrame(this._tick);
   };
 
-  ThreeWidget.prototype.resize = function () {
+  ProcessBarsWidget.prototype.resize = function () {
     const w = this.container.clientWidth || 400;
-    const h = this.container.clientHeight || 300;
+    const h = this.container.clientHeight || 200;
     this.camera.aspect = w / h;
     this.camera.updateProjectionMatrix();
     this.renderer.setSize(w, h);
   };
 
-  ThreeWidget.prototype.onResize = function () {
-    this.resize();
-  };
-
-  ThreeWidget.prototype.destroy = function () {
+  ProcessBarsWidget.prototype.destroy = function () {
     this._running = false;
     cancelAnimationFrame(this._raf);
-    this.container.removeEventListener('pointermove', this.onPointerMove);
-    window.removeEventListener('resize', this.onResize);
-    // dispose hierarchy
+    this.container.removeEventListener('pointermove', this._onPointerMove);
     this.scene.traverse(function (obj) {
       if (obj.geometry) obj.geometry.dispose && obj.geometry.dispose();
       if (obj.material) {
@@ -93,11 +136,10 @@
     }
   };
 
-  // Global helper
   global.createThreeWidget = function (containerId) {
     const el = document.getElementById(containerId);
     if (!el) throw new Error('No element with id ' + containerId);
-    return new ThreeWidget(el);
+    return new ProcessBarsWidget(el);
   };
 
 })(window);
