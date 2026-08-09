@@ -21,10 +21,17 @@ signale.start(`Starting EdexUi-2026 v${app.getVersion()}`);
 signale.info(`With Node ${process.versions.node} and Electron ${process.versions.electron}`);
 signale.info(`Renderer is Chrome ${process.versions.chrome}`);
 
-const gotLock = app.requestSingleInstanceLock();
+const allowMultipleInstances = process.env.EDEX_ALLOW_MULTIPLE_INSTANCES === "1" || process.env.EDEX_ALLOW_MULTIPLE_INSTANCES === "true";
+let gotLock = true;
+if (!allowMultipleInstances) {
+    gotLock = app.requestSingleInstanceLock();
+}
 if (!gotLock) {
     signale.fatal("Error: Another instance of eDEX is already running. Cannot proceed.");
     app.exit(1);
+}
+if (allowMultipleInstances) {
+    signale.info("Single-instance lock disabled via EDEX_ALLOW_MULTIPLE_INSTANCES");
 }
 
 signale.time("Startup");

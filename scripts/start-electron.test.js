@@ -20,3 +20,8 @@ test('detects headless Linux sessions correctly', () => {
   assert.equal(shouldUseXvfb({ DISPLAY: ':1' }, 'linux'), false);
   assert.equal(shouldUseXvfb({}, 'darwin'), false);
 });
+
+test('injects a dev override for multiple instances', () => {
+  const spec = buildLaunchSpec({ DISPLAY: ':1' }, 'linux', []);
+  assert.equal(spec.env.EDEX_ALLOW_MULTIPLE_INSTANCES, '1');
+});
