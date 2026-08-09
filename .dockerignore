@@ -1,0 +1,7 @@
+# .dockerignore - exclude node_modules and logs for faster builds
+node_modules
+src/node_modules
+logs
+.git
+.gitignore
+dist

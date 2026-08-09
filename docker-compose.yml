@@ -1,0 +1,26 @@
+version: '3.8'
+
+services:
+  edexui:
+    build: .
+    image: edexui-2026:latest
+    container_name: edexui-2026
+    ports:
+      - "6080:6080" # noVNC web access (desktop)
+    volumes:
+      - ./:/opt/edexui:cached
+    environment:
+      - DISPLAY=:1
+    shm_size: '1gb'
+    restart: unless-stopped
+
+# Optional: you can define a separate ASR demo service if desired
+# asr:
+#   image: node:18
+#   container_name: edexui-asr
+#   working_dir: /app
+#   volumes:
+#     - ./:/app:cached
+#   command: ["node", "scripts/asr_ws_demo.js"]
+#   ports:
+#     - "2700:2700"
