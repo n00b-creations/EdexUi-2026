@@ -8,17 +8,31 @@
     this.opts = opts || {};
     this.loader = new THREE.TextureLoader();
     this.cubeLoader = new THREE.CubeTextureLoader();
+    this.localAssetPrefix = this.opts.assetPrefix || 'assets/themes/';
   }
+
+  SceneThemes.prototype._local = function(name) {
+    // map theme to local filename
+    const map = {
+      'space-hub': 'space_hub.jpg',
+      'snowy-land': 'snowy_land.jpg',
+      'alien-planet': 'alien_planet.jpg',
+      'deep-space': 'deep_space.jpg'
+    };
+    return this.localAssetPrefix + (map[name] || map['deep-space']);
+  };
 
   SceneThemes.prototype._applyEquirect = function (textureUrl) {
     const self = this;
     return new Promise((resolve) => {
       this.loader.load(textureUrl, function (tex) {
-        if (window.threeGlobalScene) {
-          // use equirectangular mapping
-          tex.mapping = THREE.EquirectangularReflectionMapping;
-          window.threeGlobalScene.background = tex;
-        }
+        try {
+          if (window.threeGlobalScene) {
+            // use equirectangular mapping
+            tex.mapping = THREE.EquirectangularReflectionMapping;
+            window.threeGlobalScene.background = tex;
+          }
+        } catch (e) {}
         resolve(tex);
       }, undefined, function () { resolve(null); });
     });
@@ -41,70 +55,58 @@
     this.current = name;
 
     // Basic default: reset background
-    if (window.threeGlobalScene) window.threeGlobalScene.background = null;
+    try { if (window.threeGlobalScene) window.threeGlobalScene.background = null; } catch(e){}
 
-    // tweak particles, globe and raymarch depending on theme
+    // Try to use a local equirectangular texture first for high fidelity backgrounds
+    const localTex = this._local(name);
+
     switch (name) {
       case 'space-hub':
-        // Equirectangular space nebula (use threejs example if available)
-        await this._applyEquirect('https://threejs.org/examples/textures/2294472375_24a3b8ef46_o.jpg');
-        // enhance particles (blueish, higher amp)
+        await this._applyEquirect(localTex).catch(()=>{});
         if (window.particlesLayer && window.particlesLayer.points) {
           window.particlesLayer.points.material.uniforms.uAmp.value = 0.6;
         }
-        // globe: add city lights/emissive if present
         if (window.threeGlobeWidget && window.threeGlobeWidget.globe && window.threeGlobeWidget.globe.material) {
           try {
             const mat = window.threeGlobeWidget.globe.material;
             mat.color.setHex(0xffffff);
-            // try load earth texture
-            this.loader.load('https://threejs.org/examples/textures/earth_atmos_2048.jpg', (tex) => { mat.map = tex; mat.needsUpdate = true; });
+            this.loader.load(this.localAssetPrefix + 'space_hub.jpg', (tex) => { mat.map = tex; mat.needsUpdate = true; });
           } catch (e) {}
         }
         break;
 
       case 'snowy-land':
-        // Soft snowy sky via equirectangular winter sky
-        await this._applyEquirect('https://threejs.org/examples/textures/2294472375_24a3b8ef46_o.jpg');
-        // create snow effect by increasing particle count (if possible) or fallback to raymarch color
+        await this._applyEquirect(localTex).catch(()=>{});
         if (window.particlesLayer && window.particlesLayer.points) {
           window.particlesLayer.points.material.uniforms.uAmp.value = 0.2;
-          // tint particles to white/blue
-          // not exposing direct color uniform here - rely on particle shader mixing
-        }
-        // if raymarch exists, tint it colder
-        if (window.raymarchBg && window.raymarchBg.scene && window.raymarchBg.scene.children[0]) {
-          try { window.raymarchBg.scene.children[0].material.uniforms.iTime.value = 0.0; } catch(e){}
         }
         if (window.threeGlobeWidget && window.threeGlobeWidget.globe && window.threeGlobeWidget.globe.material) {
           try {
             const mat = window.threeGlobeWidget.globe.material;
             mat.color.setHex(0xcfe8ff);
-            this.loader.load('https://threejs.org/examples/textures/earth_daymap_1024.jpg', (tex) => { mat.map = tex; mat.needsUpdate = true; });
+            this.loader.load(this.localAssetPrefix + 'snowy_land.jpg', (tex) => { mat.map = tex; mat.needsUpdate = true; });
           } catch (e) {}
         }
         break;
 
       case 'alien-planet':
-        // vivid color sky + strange atmosphere
-        await this._applyEquirect('https://threejs.org/examples/textures/2294472375_24a3b8ef46_o.jpg');
+        await this._applyEquirect(localTex).catch(()=>{});
         if (window.particlesLayer && window.particlesLayer.points) window.particlesLayer.points.material.uniforms.uAmp.value = 0.9;
         if (window.threeGlobeWidget && window.threeGlobeWidget.globe && window.threeGlobeWidget.globe.material) {
           const mat = window.threeGlobeWidget.globe.material;
           mat.color.setHex(0xff88cc);
-          mat.needsUpdate = true;
+          this.loader.load(this.localAssetPrefix + 'alien_planet.jpg', (tex) => { mat.map = tex; mat.needsUpdate = true; });
         }
         break;
 
       case 'deep-space':
       default:
-        // starfield skybox
-        await this._applyEquirect('https://threejs.org/examples/textures/galaxy_starfield.png');
+        await this._applyEquirect(localTex).catch(()=>{});
         if (window.particlesLayer && window.particlesLayer.points) window.particlesLayer.points.material.uniforms.uAmp.value = 0.2;
         if (window.threeGlobeWidget && window.threeGlobeWidget.globe && window.threeGlobeWidget.globe.material) {
           const mat = window.threeGlobeWidget.globe.material;
           mat.color.setHex(0x88bbff);
-          mat.needsUpdate = true;
+          this.loader.load(this.localAssetPrefix + 'deep_space.jpg', (tex) => { mat.map = tex; mat.needsUpdate = true; });
         }
         break;
     }
