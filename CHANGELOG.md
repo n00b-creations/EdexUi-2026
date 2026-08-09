@@ -1,6 +1,2 @@
-feat: add 3D process bars widget, enhanced voice assistant with safety, mapping and WS ASR fallback
+feat: add full visual enhancements: postprocessing, particles, process-city, network arcs, sequencer, raymarch and visuals docs
 
-- Replaced cube demo with ProcessBarsWidget that polls window.si.processes()
-- VoiceAssistant now supports requireConfirmation, commandPrefix, mapping, and WebSocket ASR fallback
-- Added voiceCommands mapper with common rules
-- Added docs/VOICE_ASSISTANT.md

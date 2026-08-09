@@ -1,0 +1,4 @@
+/* visuals.css - layout for the enhanced visuals */
+#visuals-root { position: absolute; inset: 0; pointer-events: none; z-index: 100; }
+.visual-layer { position: absolute; left:0; top:0; width:100%; height:100%; pointer-events: none; }
+#globe-layer, #particles-layer, #processcity-layer, #arcs-layer, #raymarch-layer { position:absolute; left:0; top:0; width:100%; height:100%; }
