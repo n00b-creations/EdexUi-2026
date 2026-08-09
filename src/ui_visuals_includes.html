@@ -1,0 +1,30 @@
+<!-- Theme selector and script includes for three examples -->
+<script src="node_modules/three/examples/js/postprocessing/EffectComposer.js"></script>
+<script src="node_modules/three/examples/js/postprocessing/RenderPass.js"></script>
+<script src="node_modules/three/examples/js/postprocessing/UnrealBloomPass.js"></script>
+<script src="node_modules/three/examples/js/postprocessing/FilmPass.js"></script>
+<script src="node_modules/three/examples/js/postprocessing/ShaderPass.js"></script>
+<script src="node_modules/three/examples/js/shaders/CopyShader.js"></script>
+
+<link rel="stylesheet" href="assets/css/visuals.css" />
+
+<!-- Visuals root overlays -->
+<div id="visuals-root" aria-hidden="true">
+  <div id="raymarch-layer" class="visual-layer"></div>
+  <div id="globe-layer" class="visual-layer"></div>
+  <div id="particles-layer" class="visual-layer"></div>
+  <div id="processcity-layer" class="visual-layer"></div>
+  <div id="arcs-layer" class="visual-layer"></div>
+</div>
+
+<!-- Theme selector control -->
+<div id="theme-controls" style="position: absolute; right: 12px; top: 48px; z-index: 10001; pointer-events: auto;">
+  <select id="theme-selector" aria-label="Visual Theme Selector">
+    <option value="deep-space">Deep Space</option>
+    <option value="space-hub">Space Hub</option>
+    <option value="snowy-land">Snowy Landscape</option>
+    <option value="alien-planet">Alien Planet</option>
+  </select>
+</div>
+
+<script src="classes/sceneThemes.class.js"></script>

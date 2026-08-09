@@ -1,2 +1,1 @@
-feat: add full visual enhancements: postprocessing, particles, process-city, network arcs, sequencer, raymarch and visuals docs
-
+Add theme selector, imports for three.js example postprocessing passes, and SceneThemes manager for real-looking textured backgrounds and theme switching.
