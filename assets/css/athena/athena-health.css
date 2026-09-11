@@ -1,0 +1,73 @@
+.athena-lower-grid {
+  display: grid;
+  grid-template-columns: minmax(260px, 0.8fr) minmax(320px, 1.2fr);
+  gap: 14px;
+  padding: 0 24px 24px;
+}
+
+.athena-panel {
+  min-height: 150px;
+  border: 1px solid rgba(60, 150, 170, 0.25);
+  border-radius: 6px;
+  background: rgba(8, 22, 31, 0.88);
+}
+
+.athena-panel__header {
+  display: flex;
+  justify-content: space-between;
+  padding: 12px 14px;
+  color: #72dce5;
+  font-size: 0.7rem;
+  letter-spacing: 0.1em;
+  border-bottom: 1px solid rgba(60, 150, 170, 0.18);
+}
+
+.athena-health-list,
+.athena-activity-list {
+  display: grid;
+  gap: 8px;
+  padding: 12px;
+}
+
+.athena-health-item {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  font-size: 0.74rem;
+}
+
+.athena-health-item__body {
+  display: grid;
+  gap: 3px;
+}
+
+.athena-health-item__body span,
+.athena-activity-item span,
+.athena-muted {
+  color: #7899a1;
+  font-size: 0.68rem;
+}
+
+.athena-health-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #89999d;
+}
+
+.athena-health-dot--ready {
+  background: #42e695;
+  box-shadow: 0 0 9px rgba(66, 230, 149, 0.8);
+}
+
+.athena-health-dot--needs_setup {
+  background: #e9bd5d;
+}
+
+.athena-health-dot--disabled {
+  background: #68777b;
+}
+
+.athena-health-dot--error {
+  background: #ee5965;
+}

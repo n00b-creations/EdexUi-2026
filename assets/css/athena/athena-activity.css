@@ -1,0 +1,31 @@
+.athena-activity-item {
+  display: grid;
+  grid-template-columns: 70px 1fr;
+  gap: 10px;
+  padding: 7px 0;
+  border-bottom: 1px solid rgba(120, 180, 190, 0.1);
+}
+
+.athena-activity-item time {
+  color: #5d8991;
+  font-size: 0.68rem;
+}
+
+.athena-activity-item strong {
+  color: #c9f8fc;
+  font-size: 0.74rem;
+}
+
+.athena-activity-item p {
+  margin: 3px 0;
+  color: #9ab9bf;
+  font-size: 0.72rem;
+}
+
+.athena-activity-item--error strong {
+  color: #ff7d86;
+}
+
+.athena-activity-item--warning strong {
+  color: #edc76b;
+}
