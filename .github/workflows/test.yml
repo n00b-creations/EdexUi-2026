@@ -1,0 +1,38 @@
+name: Test
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 24
+          cache: npm
+      - name: Install root dependencies
+        run: npm ci
+      - name: Install source dependencies without native build scripts
+        run: npm ci --prefix src --legacy-peer-deps --ignore-scripts
+      - name: Run focused regression tests
+        run: npm run test:visual && node --test scripts/start-electron.test.js
+      - name: Validate edited JavaScript syntax
+        run: |
+          node --check src/_boot.js
+          node --check src/_renderer.js
+          node --check src/preload.js
+          node --check src/classes/modal.class.js
+          node --check src/classes/threeScene.class.js
+          node --check src/classes/visualExperience.class.js
+      - name: Audit production dependencies
+        continue-on-error: true
+        run: |
+          npm audit --omit=dev --audit-level=high
+          npm audit --prefix src --omit=dev --audit-level=high

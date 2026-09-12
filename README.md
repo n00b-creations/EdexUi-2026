@@ -34,6 +34,7 @@ node scripts/asr_ws_demo.js
 
 Configuration:
 - Open the UI and click the Voice button area, then open Voice Settings to configure command prefix, confirmation, PIN, ASR WS URL, and Offscreen rendering.
+- Use the **Visuals** control to select `Off`, `Minimal`, `Balanced`, or `Cinematic` process visualization quality. The process bars are keyboard accessible: use the arrow keys to select a process and Enter or Space to open the active-process list. Enable **Reduce motion** to prefer the minimal animation mode.
 
 Security:
 - By default the assistant may require confirmation before executing raw terminal commands. Use a PIN and mapped actions to restrict behavior.

@@ -252,7 +252,9 @@ if (!fs.existsSync(settingsFile)) {
         disableGlobe: false,
         disableUpdateCheck: false,
         experimentalGlobeFeatures: false,
-        experimentalFeatures: false
+        experimentalFeatures: false,
+        visualQuality: "balanced",
+        reduceMotion: false
     }, "", 4));
     signale.info(`Default settings written to ${settingsFile}`);
 }
@@ -326,12 +328,23 @@ if (typeof versionHistory[version] === "undefined") {
 }
 fs.writeFileSync(versionHistoryPath, JSON.stringify(versionHistory, 0, 2), {encoding:"utf-8"});
 
-function stripDesktopExec(execLine) {
-    if (!execLine) return "";
-    return execLine
-        .replace(/ ?%[fFuUdDnNickvm]/g, "")
-        .replace(/\s+/g, " ")
-        .trim();
+function parseDesktopExec(execLine) {
+    if (typeof execLine !== "string" || !execLine.trim()) return null;
+    const tokens = [];
+    const matcher = /(?:[^\s"']+|"(?:\\.|[^"\\])*"|'(?:\\.|[^'\\])*')+/g;
+    const matches = execLine.match(matcher);
+    if (!matches) return null;
+
+    matches.forEach(token => {
+        const value = token
+            .replace(/%[fFuUdDnNickvm]/g, "")
+            .replace(/^['"]|['"]$/g, "")
+            .replace(/\\(["'\\ ])/g, "$1");
+        if (value) tokens.push(value);
+    });
+
+    if (!tokens.length || /[;&|`$<>]/.test(tokens[0])) return null;
+    return {command: tokens[0], args: tokens.slice(1)};
 }
 
 function commandExists(command) {
@@ -370,10 +383,15 @@ function parseDesktopEntry(filePath) {
     if (entry.NoDisplay === "true" || entry.Hidden === "true") return null;
     if (entry.TryExec && !commandExists(entry.TryExec)) return null;
 
+    const command = parseDesktopExec(entry.Exec);
+    if (!command) return null;
+
     return {
         id: path.basename(filePath, ".desktop"),
         name: entry.Name,
-        exec: stripDesktopExec(entry.Exec),
+        command: command.command,
+        args: command.args,
+        exec: [command.command, ...command.args].join(" "),
         icon: entry.Icon || "",
         terminal: entry.Terminal === "true",
         categories: entry.Categories || "",
@@ -432,24 +450,24 @@ function launchDesktopApp(appId) {
         throw new Error(`Application "${appId}" not found`);
     }
 
+    const appCommand = [app.command, ...app.args];
     const launchers = [];
     if (app.terminal) {
         [
-            ["x-terminal-emulator", ["-e", app.exec]],
-            ["gnome-terminal", ["--", "sh", "-lc", app.exec]],
-            ["konsole", ["-e", app.exec]],
-            ["xfce4-terminal", ["-e", app.exec]],
-            ["kitty", ["sh", "-lc", app.exec]],
-            ["alacritty", ["-e", "sh", "-lc", app.exec]],
-            ["xterm", ["-e", app.exec]]
+            ["x-terminal-emulator", ["-e", ...appCommand]],
+            ["gnome-terminal", ["--", ...appCommand]],
+            ["konsole", ["-e", ...appCommand]],
+            ["xfce4-terminal", ["-e", ...appCommand]],
+            ["kitty", [...appCommand]],
+            ["alacritty", ["-e", ...appCommand]],
+            ["xterm", ["-e", ...appCommand]]
         ].forEach(([command, args]) => {
             if (commandExists(command)) launchers.push({command, args});
         });
-        launchers.push({command: "sh", args: ["-lc", app.exec]});
     } else {
         if (commandExists("gtk-launch")) launchers.push({command: "gtk-launch", args: [app.id]});
         if (commandExists("gio")) launchers.push({command: "gio", args: ["launch", app.filePath]});
-        launchers.push({command: "sh", args: ["-lc", app.exec]});
+        launchers.push({command: app.command, args: app.args});
     }
 
     let launched = false;
@@ -509,6 +527,7 @@ function createWindow(settings) {
         frame: allowWindowed,
         backgroundColor: '#000000',
         webPreferences: {
+            preload: path.join(__dirname, "preload.js"),
             devTools: true,
 	    enableRemoteModule: true,
             contextIsolation: false,
@@ -559,7 +578,9 @@ app.on('ready', async () => {
         disableVulkan: false,
         optimizeVulkan: true,
         disableGlobe: false,
-        disableUpdateCheck: false
+        disableUpdateCheck: false,
+        visualQuality: "balanced",
+        reduceMotion: false
     };
     let wroteSettingsDefaults = false;
     Object.keys(settingsDefaults).forEach(key => {
@@ -725,6 +746,26 @@ app.on('ready', async () => {
     ipc.on("frontend-painted", () => {
         showFrontendWindow();
     });
+    ipc.handle("edex:openExternal", (event, target) => {
+        if (!win || event.sender !== win.webContents) throw new Error("Unauthorized external URL request");
+        const parsed = new URL(target);
+        if (!["https:", "http:", "mailto:"].includes(parsed.protocol)) {
+            throw new Error(`Unsupported external URL protocol: ${parsed.protocol}`);
+        }
+        return shell.openExternal(parsed.toString());
+    });
+    ipc.handle("edex:saveVisualPreferences", (event, preferences) => {
+        if (!win || event.sender !== win.webContents) throw new Error("Unauthorized visual preferences request");
+        if (!preferences || typeof preferences !== "object" || Array.isArray(preferences)) {
+            throw new Error("Visual preferences must be an object");
+        }
+        if (!["off", "minimal", "balanced", "cinematic"].includes(preferences.visualQuality)) {
+            throw new Error("Invalid visual quality");
+        }
+        if (typeof preferences.reduceMotion !== "boolean") throw new Error("Invalid reduced-motion value");
+        const persisted = {...settings, visualQuality: preferences.visualQuality, reduceMotion: preferences.reduceMotion};
+        fs.writeFileSync(settingsFile, JSON.stringify(persisted, null, 4));
+    });
     ipc.on("appManager:getInstalledApps", e => {
         getInstalledAppsCached(false).then(apps => {
             e.sender.send("appManager:installedApps", apps);
@@ -749,10 +790,28 @@ app.on('ready', async () => {
 });
 
 app.on('web-contents-created', (e, contents) => {
+    const openAllowedExternalUrl = target => {
+        try {
+            const parsed = new URL(target);
+            if (["https:", "http:", "mailto:"].includes(parsed.protocol)) {
+                shell.openExternal(parsed.toString());
+                return;
+            }
+            signale.warn(`Blocked external navigation with unsupported protocol: ${parsed.protocol}`);
+        } catch (error) {
+            signale.warn(`Blocked malformed external navigation: ${target}`);
+        }
+    };
+
+    contents.setWindowOpenHandler(({url}) => {
+        openAllowedExternalUrl(url);
+        return {action: "deny"};
+    });
+
     // Prevent creating more than one window
     contents.on('new-window', (e, url) => {
         e.preventDefault();
-        shell.openExternal(url);
+        openAllowedExternalUrl(url);
     });
 
     // Prevent loading something else than the UI
