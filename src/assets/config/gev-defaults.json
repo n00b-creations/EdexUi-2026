@@ -1,0 +1,199 @@
+{
+  "layers": {
+    "flights": {
+      "enabled": true,
+      "source": "opensky+adsb.lol",
+      "updateInterval": 15000,
+      "detectionDensity": 50,
+      "description": "11,000+ live aircraft with real telemetry"
+    },
+    "military": {
+      "enabled": true,
+      "source": "adsb.lol",
+      "updateInterval": 15000,
+      "description": "Military aircraft in amber"
+    },
+    "vessels": {
+      "enabled": false,
+      "source": "aisstream",
+      "updateInterval": 30000,
+      "requiresKey": true,
+      "description": "Thousands of ships worldwide"
+    },
+    "satellites": {
+      "enabled": true,
+      "source": "celestrak",
+      "updateInterval": 60000,
+      "description": "838+ tracked objects, color-coded by class"
+    },
+    "earthquakes": {
+      "enabled": true,
+      "source": "usgs",
+      "updateInterval": 300000,
+      "description": "Global seismic activity (last 24h)"
+    },
+    "cctv": {
+      "enabled": false,
+      "source": "public-cameras",
+      "updateInterval": 5000,
+      "regions": ["austin", "london", "california", "finland", "ontario"],
+      "description": "~3,400 public cameras projected into 3D"
+    },
+    "traffic": {
+      "enabled": false,
+      "source": "tomtom",
+      "updateInterval": 10000,
+      "requiresKey": false,
+      "description": "Simulated vehicles on roads"
+    },
+    "fires": {
+      "enabled": false,
+      "source": "nasa-firms",
+      "updateInterval": 600000,
+      "description": "Live active fire detections"
+    },
+    "radio": {
+      "enabled": false,
+      "source": "radio-browser",
+      "updateInterval": 30000,
+      "description": "Geolocated world radio stations"
+    },
+    "bikeshare": {
+      "enabled": false,
+      "source": "gbfs",
+      "updateInterval": 60000,
+      "description": "Live bikeshare station availability"
+    },
+    "launches": {
+      "enabled": false,
+      "source": "launch-library-2",
+      "updateInterval": 3600000,
+      "description": "Upcoming space missions (30-day window)"
+    }
+  },
+  "display": {
+    "style": "normal",
+    "hudVisible": true,
+    "detectionEnabled": true,
+    "detectionDensity": 50,
+    "terrainExaggeration": 1.0,
+    "cloudEffects": false,
+    "waterEffects": true
+  },
+  "basemap": {
+    "primary": "esri-satellite",
+    "alternatives": ["osm", "google-3d"],
+    "terrain": "cesium-ion-or-esri"
+  },
+  "voice": {
+    "enabled": false,
+    "provider": "openai",
+    "model": "gpt-4-mini",
+    "continuousListening": false,
+    "language": "en-US"
+  },
+  "performance": {
+    "maxFlightTracksDisplayed": 2000,
+    "detectionQuality": "high",
+    "terrainDetailLevel": "medium"
+  },
+  "presets": {
+    "live-contacts": {
+      "name": "Live Contacts",
+      "description": "Active aircraft and military traffic",
+      "layers": {
+        "flights": true,
+        "military": true,
+        "vessels": false,
+        "satellites": false,
+        "earthquakes": false,
+        "cctv": false,
+        "traffic": false
+      },
+      "displayStyle": "normal",
+      "detectionDensity": 75
+    },
+    "space-missions": {
+      "name": "Space Missions",
+      "description": "Satellites, launches, and orbital tracking",
+      "layers": {
+        "flights": false,
+        "satellites": true,
+        "launches": true,
+        "vessels": false,
+        "cctv": false,
+        "traffic": false,
+        "earthquakes": false
+      },
+      "displayStyle": "normal",
+      "detectionDensity": 50
+    },
+    "environmental": {
+      "name": "Environmental",
+      "description": "Earthquakes, fires, and natural phenomena",
+      "layers": {
+        "earthquakes": true,
+        "fires": true,
+        "vessels": false,
+        "flights": false,
+        "cctv": false,
+        "traffic": false
+      },
+      "displayStyle": "normal",
+      "detectionDensity": 50
+    },
+    "urban-ops": {
+      "name": "Urban Operations",
+      "description": "City-level intelligence: CCTV, traffic, flights",
+      "layers": {
+        "flights": true,
+        "cctv": true,
+        "traffic": true,
+        "vessels": false,
+        "satellites": false,
+        "earthquakes": false
+      },
+      "displayStyle": "normal",
+      "detectionDensity": 100
+    }
+  },
+  "apiKeys": {
+    "cesiumIon": {
+      "description": "Google 3D tiles, world terrain, additional imagery stacks",
+      "tier": "free",
+      "required": false,
+      "link": "https://cesium.com/ion"
+    },
+    "googleMaps": {
+      "description": "Direct Google 3D, place search, metered route",
+      "tier": "metered",
+      "required": false,
+      "link": "https://console.cloud.google.com"
+    },
+    "openaiApiKey": {
+      "description": "Voice control, AI HUD summary",
+      "tier": "metered",
+      "required": false,
+      "costPerMinute": 0.01,
+      "link": "https://platform.openai.com"
+    },
+    "aisstreamApiKey": {
+      "description": "Live global ship tracking",
+      "tier": "free",
+      "required": false,
+      "link": "https://aisstream.io"
+    },
+    "nasaFirmsKey": {
+      "description": "Live active fire detections",
+      "tier": "free",
+      "required": false,
+      "link": "https://firms.modaps.eosdis.nasa.gov"
+    },
+    "tomtomApiKey": {
+      "description": "Live traffic flow speeds and congestion",
+      "tier": "free",
+      "required": false,
+      "link": "https://developer.tomtom.com"
+    }
+  }
+}
