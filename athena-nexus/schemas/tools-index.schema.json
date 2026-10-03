@@ -1,0 +1,41 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://cyber-os.local/schemas/tools-index.schema.json",
+  "type": "object",
+  "required": ["schema_version", "provider", "tool_count", "tools", "manifest_sha256"],
+  "properties": {
+    "schema_version": { "type": "string", "const": "1.0.0" },
+    "provider": { "type": "string", "const": "blackarch" },
+    "tool_count": { "type": "integer", "minimum": 0 },
+    "manifest_sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "crawl": {
+      "type": "object",
+      "properties": {
+        "requested_categories": { "type": "array", "items": { "type": "string" } },
+        "successful_categories": { "type": "integer", "minimum": 0 },
+        "failed_categories": { "type": "integer", "minimum": 0 },
+        "failures": { "type": "array", "items": { "type": "object" } }
+      }
+    },
+    "tools": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "name", "package", "provider", "categories"],
+        "properties": {
+          "id": { "type": "string", "pattern": "^blackarch:[a-z0-9][a-z0-9+._-]*$" },
+          "name": { "type": "string", "minLength": 1 },
+          "package": { "type": "string", "minLength": 1 },
+          "provider": { "type": "string", "const": "blackarch" },
+          "version": { "type": ["string", "null"] },
+          "description": { "type": ["string", "null"] },
+          "homepage": { "type": ["string", "null"], "format": "uri" },
+          "categories": { "type": "array", "items": { "type": "string" }, "uniqueItems": true },
+          "source_url": { "type": ["string", "null"], "format": "uri" }
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "additionalProperties": false
+}

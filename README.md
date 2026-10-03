@@ -37,3 +37,19 @@ Configuration:
 
 Security:
 - By default the assistant may require confirmation before executing raw terminal commands. Use a PIN and mapped actions to restrict behavior.
+
+## Athena-Nexus BlackArch Indexer
+
+The repository now contains the first production-oriented BlackArch metadata indexing layer under `athena-nexus/`. It crawls explicit official BlackArch category pages, normalizes package metadata into a canonical `blackarch:<package>` registry ID, deduplicates tools across categories, validates the result, and writes an atomic candidate index.
+
+The indexer is metadata-only: it does not execute tools, install packages, or perform network attacks. Runtime execution remains a separate controlled boundary.
+
+```bash
+cd athena-nexus/indexer
+python3 -m venv .venv
+. .venv/bin/activate
+pip install -e .
+blackarch-index crawl --categories-file ../indexer/categories.txt
+```
+
+For the architecture and safety model, see `athena-nexus/indexer/README.md` and `athena-nexus/schemas/tools-index.schema.json`.
