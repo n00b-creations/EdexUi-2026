@@ -88,8 +88,7 @@
           window.openSystemFileExplorer && window.openSystemFileExplorer();
           break;
         case 'showProcesses':
-          // open a modal with processes, reuse appManager or custom
-          if (typeof window.openAppManager === 'function') window.openAppManager();
+          if (typeof window.openProcessList === 'function') window.openProcessList();
           break;
         case 'speak':
           this.speak(action.payload.text);
