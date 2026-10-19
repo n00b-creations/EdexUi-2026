@@ -50,6 +50,7 @@ const which = require("which");
 const Terminal = require("./classes/terminal.class.js").Terminal;
 
 ipc.on("log", (e, type, content) => {
+    if (!win || e.sender !== win.webContents) return;
     signale[type](content);
 });
 
@@ -529,7 +530,6 @@ function createWindow(settings) {
         webPreferences: {
             preload: path.join(__dirname, "preload.js"),
             devTools: true,
-	    enableRemoteModule: true,
             contextIsolation: false,
             backgroundThrottling: false,
             webSecurity: true,
@@ -673,6 +673,11 @@ app.on('ready', async () => {
     }
 
     ipc.on("ttyspawn", (e, arg) => {
+        if (!win || e.sender !== win.webContents) {
+            signale.warn("TTY spawn denied (Reason: unauthorized sender)");
+            return;
+        }
+
         const requestedCwd = (arg && typeof arg === "object" && typeof arg.cwd === "string" && arg.cwd.trim()) ? arg.cwd.trim() : null;
         const requestId = (arg && typeof arg === "object" && typeof arg.requestId === "string" && arg.requestId.trim()) ? arg.requestId.trim() : null;
         const replyChannel = requestId ? `ttyspawn-reply-${requestId}` : "ttyspawn-reply";
@@ -729,15 +734,23 @@ app.on('ready', async () => {
     let themeOverride = null;
     let kbOverride = null;
     ipc.on("getThemeOverride", (e, arg) => {
+        if (!win || e.sender !== win.webContents) return;
+
         e.sender.send("getThemeOverride", themeOverride);
     });
     ipc.on("getKbOverride", (e, arg) => {
+        if (!win || e.sender !== win.webContents) return;
+
         e.sender.send("getKbOverride", kbOverride);
     });
     ipc.on("setThemeOverride", (e, arg) => {
+        if (!win || e.sender !== win.webContents) return;
+
         themeOverride = arg;
     });
     ipc.on("setKbOverride", (e, arg) => {
+        if (!win || e.sender !== win.webContents) return;
+
         kbOverride = arg;
     });
     ipc.on("frontend-ready", () => {
@@ -767,6 +780,8 @@ app.on('ready', async () => {
         fs.writeFileSync(settingsFile, JSON.stringify(persisted, null, 4));
     });
     ipc.on("appManager:getInstalledApps", e => {
+        if (!win || e.sender !== win.webContents) return;
+
         getInstalledAppsCached(false).then(apps => {
             e.sender.send("appManager:installedApps", apps);
         }).catch(error => {
@@ -774,6 +789,15 @@ app.on('ready', async () => {
         });
     });
     ipc.on("appManager:launch", (e, appId) => {
+        if (!win || e.sender !== win.webContents) {
+            e.sender.send("appManager:launchResult", {ok: false, error: "Unauthorized app launch request"});
+            return;
+        }
+        if (typeof appId !== "string" || !appId.trim()) {
+            e.sender.send("appManager:launchResult", {ok: false, error: "Invalid app id"});
+            return;
+        }
+
         try {
             const app = launchDesktopApp(appId);
             e.sender.send("appManager:launchResult", {
@@ -802,6 +826,20 @@ app.on('web-contents-created', (e, contents) => {
             signale.warn(`Blocked malformed external navigation: ${target}`);
         }
     };
+
+    // Deny all permission requests (geolocation, notifications, media, ...)
+    if (contents.session && typeof contents.session.setPermissionRequestHandler === "function") {
+        contents.session.setPermissionRequestHandler((wc, permission, callback) => {
+            signale.warn(`Denied permission request: ${permission}`);
+            callback(false);
+        });
+    }
+
+    // Never allow embedding webviews
+    contents.on('will-attach-webview', (e) => {
+        e.preventDefault();
+        signale.warn("Blocked webview attachment");
+    });
 
     contents.setWindowOpenHandler(({url}) => {
         openAllowedExternalUrl(url);
