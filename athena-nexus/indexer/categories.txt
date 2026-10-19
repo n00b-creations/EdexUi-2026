@@ -1,7 +1,10 @@
 # Initial production crawl surface.
 # Add/remove official BlackArch category slugs here after review.
+# Slugs verified against blackarch.org sitemap.xml and tools.html on 2026-10-19.
 ai
 anti-forensic
+automation
+automobile
 backdoor
 binary
 bluetooth
@@ -11,10 +14,13 @@ crypto
 database
 debugger
 decompiler
+defensive
 disassembler
 dos
-drivers
+drone
 exploitation
+fingerprint
+firmware
 forensic
 fuzzer
 hardware
@@ -24,15 +30,22 @@ keylogger
 malware
 misc
 mobile
+nfc
 networking
+packer
+proxy
+radio
+recon
+reversing
 scanner
 sniffer
 social
 spoof
-steganography
-traffic-analysis
+stego
+threat-model
+tunnel
 voip
-vulnerability
 webapp
+windows
 wireless
 wordlist

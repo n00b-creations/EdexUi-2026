@@ -46,3 +46,12 @@ src/node_modules
 .env.signing.local
 *.p12
 *.pfx
+
+# Python virtual environments (athena-nexus indexer)
+.venv/
+venv/
+__pycache__/
+*.egg-info/
+
+# Indexer generated crawl output
+candidate/
