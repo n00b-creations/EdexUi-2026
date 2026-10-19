@@ -47,7 +47,7 @@
     "three": "^0.185.1",
     "username": "7.0.0",
     "which": "6.0.1",
-    "ws": "^8.21.3",
+    "ws": "^8.22.0",
     "xterm": "5.3.0",
     "xterm-addon-attach": "0.9.0",
     "xterm-addon-fit": "0.8.0",
