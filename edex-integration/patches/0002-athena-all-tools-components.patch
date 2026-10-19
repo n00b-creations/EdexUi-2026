@@ -1,0 +1,15 @@
+Subject: [ATHENA] Add All Tools component layer
+
+Adds the Athena-Nexus read-only All Tools view:
+
+- Tool catalog API client
+- Tool cards and category filtering
+- Tool detail inspector dialog
+- Adapter health panel
+- Activity feed
+- Athena renderer bootstrap
+- Athena-specific stylesheets
+
+This patch does not add arbitrary command execution.
+Workflow requests remain disabled until policy validation,
+approval records, and isolated workers are implemented.
