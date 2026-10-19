@@ -72,8 +72,20 @@ window.openExternalPath = targetPath => {
     electronWin.minimize();
 };
 window.openExternalUrl = targetUrl => {
-    electron.shell.openExternal(targetUrl);
-    electronWin.minimize();
+    try {
+        const parsed = new URL(targetUrl);
+        if (!["https:", "http:", "mailto:"].includes(parsed.protocol)) {
+            throw new Error(`Unsupported external URL protocol: ${parsed.protocol}`);
+        }
+        if (window.edex && typeof window.edex.openExternal === "function") {
+            window.edex.openExternal(parsed.toString()).catch(error => console.warn("Blocked external URL", error));
+        } else {
+            electron.shell.openExternal(parsed.toString());
+        }
+        electronWin.minimize();
+    } catch (error) {
+        console.warn("Blocked external URL", error);
+    }
 };
 window.hideReleaseUpdateNotice = () => {
     const notice = document.getElementById("main_shell_update_notice");
@@ -175,6 +187,7 @@ const themesDir = path.join(settingsDir, "themes");
 const keyboardsDir = path.join(settingsDir, "keyboards");
 const fontsDir = path.join(settingsDir, "fonts");
 const settingsFile = path.join(settingsDir, "settings.json");
+window.settingsFile = settingsFile;
 const shortcutsFile = path.join(settingsDir, "shortcuts.json");
 const lastWindowStateFile = path.join(settingsDir, "lastWindowState.json");
 const unsupportedKeyboardLayouts = new Set([
@@ -557,6 +570,7 @@ async function initUI() {
     window.mods.cpuinfo = new Cpuinfo("mod_column_left");
     window.mods.ramwatcher = new RAMwatcher("mod_column_left");
     window.mods.toplist = new Toplist("mod_column_left");
+    window.openProcessList = () => window.mods.toplist.processList();
 
     // Right column
     window.mods.netstat = new Netstat("mod_column_right");

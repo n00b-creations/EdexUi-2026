@@ -47,14 +47,24 @@ class Toplist {
             });
             list.forEach(proc => {
                 let el = document.createElement("tr");
-                el.innerHTML = `<td>${proc.pid}</td>
-                                <td><strong>${proc.name}</strong></td>
-                                <td>${Math.round(proc.cpu*10)/10}%</td>
-                                <td>${Math.round(proc.mem*10)/10}%</td>`;
+                this._appendCell(el, proc.pid);
+                const nameCell = this._appendCell(el, proc.name);
+                const name = document.createElement("strong");
+                name.textContent = proc.name || "";
+                nameCell.replaceChildren(name);
+                this._appendCell(el, `${Math.round(proc.cpu*10)/10}%`);
+                this._appendCell(el, `${Math.round(proc.mem*10)/10}%`);
                 document.getElementById("mod_toplist_table").append(el);
             });
             this.currentlyUpdating = false;
         });
+    }
+    _appendCell(row, value, className) {
+        const cell = document.createElement("td");
+        if (className) cell.className = className;
+        cell.textContent = value === undefined || value === null ? "" : String(value);
+        row.append(cell);
+        return cell;
     }
 
     processList(){
@@ -177,14 +187,20 @@ class Toplist {
 
                     list.forEach(proc => {
                         let el = document.createElement("tr");
-                        el.innerHTML = `<td class="pid">${proc.pid}</td>
-                            <td class="name">${proc.name}</td>
-                            <td class="user">${proc.user}</td>
-                            <td class="cpu">${Math.round(proc.cpu * 10) / 10}%</td>
-                            <td class="mem">${Math.round(proc.mem * 10) / 10}%</td>
-                            <td class="state">${proc.state}</td>
-                            <td class="started">${proc.started}</td>
-                            <td class="runtime">${formatRuntime(proc.runtime)}</td>`;
+                        const appendCell = (value, className) => {
+                            const cell = document.createElement("td");
+                            cell.className = className;
+                            cell.textContent = value === undefined || value === null ? "" : String(value);
+                            el.append(cell);
+                        };
+                        appendCell(proc.pid, "pid");
+                        appendCell(proc.name, "name");
+                        appendCell(proc.user, "user");
+                        appendCell(`${Math.round(proc.cpu * 10) / 10}%`, "cpu");
+                        appendCell(`${Math.round(proc.mem * 10) / 10}%`, "mem");
+                        appendCell(proc.state, "state");
+                        appendCell(proc.started, "started");
+                        appendCell(formatRuntime(proc.runtime), "runtime");
                         document.getElementById("processList").append(el);
                     });
                 }

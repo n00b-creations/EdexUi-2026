@@ -17,6 +17,7 @@
     "start:headless": "node scripts/start-electron.js src --disable-gpu --use-gl=swiftshader --ignore-gpu-blocklist",
     "start:fast": "node scripts/start-electron.js src --nointro",
     "start:electron": "node scripts/start-electron.js",
+    "test:visual": "node --test scripts/visual-experience.test.js",
     "install-linux": "npm install && cd src && npm install --legacy-peer-deps && npx electron-rebuild -f -w node-pty && cd ..",
     "preinstall-windows": "npm install --global --production windows-build-tools && npm install --global node-gyp && setx PYTHON \"%USERPROFILE%\\.windows-build-tools\\python27\\python.exe\"",
     "install-windows": "npm install && cd src && npm install --legacy-peer-deps && npx electron-rebuild -f -w node-pty && cd ..",
