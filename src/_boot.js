@@ -147,7 +147,7 @@ function parseShellArgs(rawArgs) {
     const trimmed = rawArgs.trim();
     if (!trimmed) return [];
 
-    const matches = trimmed.match(/"[^"]*"|'[^']*'|\S+/g);
+    const matches = trimmed.match(/"[^\"]*"|'[^']*'|\S+/g);
     if (!matches) return [];
 
     return matches.map(arg => arg.replace(/^['"]|['"]$/g, ""));
@@ -178,11 +178,24 @@ async function findAvailablePort(startPort) {
 if (process.env.http_proxy) delete process.env.http_proxy;
 if (process.env.https_proxy) delete process.env.https_proxy;
 
-function loadEarlySettings() {
+// Centralized settings loader (migrated from inline defaults)
+let settings = {};
+let earlySettings = {};
+try {
+    const settingsModule = require('./config/settings');
+    const userDataDir = (electron && electron.app && typeof electron.app.getPath === 'function') ? electron.app.getPath('userData') : undefined;
+    // ensure any legacy migration happens first
+    migrateLegacyUserData();
+    settings = settingsModule.loadSettings(userDataDir);
+    earlySettings = settings;
+    signale.info('Settings loaded from centralized settings module');
+} catch (e) {
+    signale.warn('Settings module not available or failed to load; falling back to previous behavior', e && (e.message || e));
+    // As a fallback, attempt to read existing settings file if present
     try {
-        return JSON.parse(fs.readFileSync(settingsFile, "utf8"));
-    } catch (error) {
-        return {};
+        earlySettings = JSON.parse(fs.readFileSync(settingsFile, 'utf8'));
+    } catch (err) {
+        earlySettings = {};
     }
 }
 
@@ -193,7 +206,6 @@ function appendFeatureSwitch(switchName, featureName) {
     app.commandLine.appendSwitch(switchName, Array.from(features).join(","));
 }
 
-const earlySettings = loadEarlySettings();
 const vulkanDisabled = process.env.EDEX_DISABLE_VULKAN === "true" || earlySettings.disableVulkan === true;
 const vulkanEnabled = !vulkanDisabled && (process.env.EDEX_ENABLE_VULKAN === "true" || earlySettings.enableVulkan === true);
 const vulkanOptimizationsEnabled = vulkanEnabled
@@ -223,42 +235,8 @@ try {
 } catch(e) {
     signale.info(`Base config dir is ${electron.app.getPath("userData")}`);
 }
-// Create default settings file
-if (!fs.existsSync(settingsFile)) {
-    fs.writeFileSync(settingsFile, JSON.stringify({
-        shell: (process.platform === "win32") ? "powershell.exe" : "bash",
-        shellArgs: '',
-        keyboard: "en-US",
-        theme: "tron",
-        termFontSize: 15,
-        audio: true,
-        audioVolume: 1.0,
-        clockHours: 24,
-        pingAddr: "1.1.1.1",
-        port: 3000,
-        nointro: false,
-        nocursor: false,
-        forceFullscreen: false,
-        allowWindowed: true,
-        keepGeometry: true,
-        excludeThreadsFromToplist: true,
-        hideDotfiles: false,
-        fsListView: false,
-        termHardwareAcceleration: false,
-        enableVulkan: false,
-        disableVulkan: false,
-        optimizeVulkan: true,
-        termLigatures: false,
-        disableGlobe: false,
-        disableUpdateCheck: false,
-        experimentalGlobeFeatures: false,
-        experimentalFeatures: false,
-        visualQuality: "balanced",
-        reduceMotion: false
-    }, "", 4));
-    signale.info(`Default settings written to ${settingsFile}`);
-}
-// Create default shortcuts file
+
+// Create default shortcuts file (kept here for backward compatibility)
 if (!fs.existsSync(shortcutsFile)) {
     fs.writeFileSync(shortcutsFile, JSON.stringify([
         { type: "app", trigger: "Ctrl+Shift+C", action: "COPY", enabled: true },
@@ -275,7 +253,7 @@ if (!fs.existsSync(shortcutsFile)) {
         { type: "app", trigger: "Ctrl+Shift+P", action: "KB_PASSMODE", enabled: true },
         { type: "app", trigger: "Ctrl+Shift+I", action: "DEV_DEBUG", enabled: false },
         { type: "app", trigger: "Ctrl+Shift+F5", action: "DEV_RELOAD", enabled: true },
-        { type: "shell", trigger: "Ctrl+Shift+Alt+Space", action: "neofetch", linebreak: true, enabled: false }
+        { type: "app", trigger: "Ctrl+Shift+Alt+Space", action: "neofetch", linebreak: true, enabled: false }
     ], "", 4));
     signale.info(`Default keymap written to ${shortcutsFile}`);
 }
@@ -331,7 +309,7 @@ fs.writeFileSync(versionHistoryPath, JSON.stringify(versionHistory, 0, 2), {enco
 function parseDesktopExec(execLine) {
     if (typeof execLine !== "string" || !execLine.trim()) return null;
     const tokens = [];
-    const matcher = /(?:[^\s"']+|"(?:\\.|[^"\\])*"|'(?:\\.|[^'\\])*')+/g;
+    const matcher = /(?:[^\s"']+|"(?:\\.|[^"\\])*")/g;
     const matches = execLine.match(matcher);
     if (!matches) return null;
 
