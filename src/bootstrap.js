@@ -1,4 +1,4 @@
-const os = require('os');
+const fs = require('fs');
 const path = require('path');
 
 const settingsModule = require('./config/settings');
@@ -11,14 +11,18 @@ function resolveUserDataDir() {
       return electron.app.getPath('userData');
     }
   } catch (e) {}
-  return path.join(os.homedir(), '.config', 'EdexUi-2026');
+  return path.join(require('os').homedir(), '.config', 'EdexUi-2026');
+}
+
+function getRuntimeSettings() {
+  const userDataDir = resolveUserDataDir();
+  return settingsModule.loadSettings(userDataDir);
 }
 
 async function start() {
-  const userDataDir = resolveUserDataDir();
-  const settings = settingsModule.loadSettings(userDataDir);
+  const settings = getRuntimeSettings();
   global.__EDEX_SETTINGS = settings;
   require('./_boot.js');
 }
 
-module.exports = { start, resolveUserDataDir };
+module.exports = { start, resolveUserDataDir, getRuntimeSettings };
