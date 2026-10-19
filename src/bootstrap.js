@@ -1,8 +1,7 @@
-const fs = require('fs');
 const os = require('os');
 const path = require('path');
 
-const settingsModule = require('./settings');
+const settingsModule = require('./config/settings');
 
 function resolveUserDataDir() {
   if (process.env.EDEX_USER_DATA) return process.env.EDEX_USER_DATA;
@@ -19,9 +18,7 @@ async function start() {
   const userDataDir = resolveUserDataDir();
   const settings = settingsModule.loadSettings(userDataDir);
   global.__EDEX_SETTINGS = settings;
-
-  // Keep original startup entrypoint intact while centralized config logic is in place.
-  require('../src/_boot.js');
+  require('./_boot.js');
 }
 
 module.exports = { start, resolveUserDataDir };
